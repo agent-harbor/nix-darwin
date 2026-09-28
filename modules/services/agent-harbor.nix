@@ -74,11 +74,15 @@ in
 
     system.activationScripts.launchd.text = mkIf cfg.snapshotDaemon.enable (mkBefore ''
       echo >&2 "setting up Agent Harbor directories..."
-      mkdir -p -m 0775 "$(dirname "${cfg.snapshotDaemon.socketPath}")"
+      # No `mkdir -m`: with -p it only moves the deepest directory's mode
+      # (shellcheck SC2174, which fails the darwin-system build), and the
+      # explicit chown/chmod below set ownership and mode on every activation,
+      # also correcting a directory that already exists.
+      mkdir -p "$(dirname "${cfg.snapshotDaemon.socketPath}")"
       chown root:${cfg.snapshotDaemon.group} "$(dirname "${cfg.snapshotDaemon.socketPath}")"
       chmod 0775 "$(dirname "${cfg.snapshotDaemon.socketPath}")"
 
-      mkdir -p -m 0755 "${cfg.snapshotDaemon.logDir}"
+      mkdir -p "${cfg.snapshotDaemon.logDir}"
       chown root:wheel "${cfg.snapshotDaemon.logDir}"
       chmod 0755 "${cfg.snapshotDaemon.logDir}"
     '');
